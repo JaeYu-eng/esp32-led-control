@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>아이콘 생성기</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        canvas {
+            border: 1px solid #ccc;
+            margin: 10px;
+        }
+        .icon-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .icon-item {
+            text-align: center;
+            margin: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>ESP32 LED 제어 앱 아이콘 생성기</h1>
+    <p>아이콘을 생성하려면 아래 버튼을 클릭하세요.</p>
+    <button id="generateBtn">아이콘 생성</button>
+    <div id="iconContainer" class="icon-container"></div>
+
+    <script>
+        const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+        const iconContainer = document.getElementById('iconContainer');
+        const generateBtn = document.getElementById('generateBtn');
+
+        function generateIcons() {
+            iconContainer.innerHTML = '';
+            
+            sizes.forEach(size => {
+                const canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                const ctx = canvas.getContext('2d');
+                
+                // 배경
+                ctx.fillStyle = '#4CAF50';
+                ctx.fillRect(0, 0, size, size);
+                
+                // LED 아이콘
+                ctx.fillStyle = 'white';
+                const centerX = size / 2;
+                const centerY = size / 2;
+                const radius = size * 0.4;
+                
+                // LED 본체
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // LED 내부 원
+                ctx.fillStyle = '#4CAF50';
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius * 0.7, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 아이콘 컨테이너에 추가
+                const iconItem = document.createElement('div');
+                iconItem.className = 'icon-item';
+                iconItem.appendChild(canvas);
+                
+                // 다운로드 링크 추가
+                const link = document.createElement('a');
+                link.href = canvas.toDataURL('image/png');
+                link.download = `icon-${size}x${size}.png`;
+                link.textContent = `${size}x${size} 다운로드`;
+                link.style.display = 'block';
+                iconItem.appendChild(link);
+                
+                iconContainer.appendChild(iconItem);
+            });
+        }
+
+        generateBtn.addEventListener('click', generateIcons);
+    </script>
+</body>
+</html> 

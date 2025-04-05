@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 LED 제어</title>
+    <meta name="theme-color" content="#4CAF50">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="LED 제어">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --background-color: #f5f5f5;
+            --card-background: white;
+            --text-color: #333;
+            --border-radius: 15px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: var(--card-background);
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+        }
+
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            text-align: center;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .connected {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .disconnected {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            width: 100%;
+        }
+
+        .button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .button:active {
+            transform: scale(0.98);
+        }
+
+        .brightness-control {
+            margin: 30px 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: var(--border-radius);
+        }
+
+        .brightness-label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .brightness-value {
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 10px 0;
+        }
+
+        .slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: #ddd;
+            outline: none;
+            margin: 20px 0;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+        }
+
+        .led-status {
+            text-align: center;
+            margin: 15px 0;
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+
+        /* 토글 스위치 스타일 */
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .toggle-label {
+            margin-right: 15px;
+            font-weight: 500;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: var(--primary-color);
+        }
+
+        input:disabled + .toggle-slider {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .button {
+                padding: 12px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ESP32 LED 제어</h1>
+        
+        <div id="connectionStatus" class="status disconnected">
+            연결 상태: 연결되지 않음
+        </div>
+
+        <div id="ledStatus" class="led-status">
+            LED 상태: 꺼짐
+        </div>
+
+        <div class="button-group">
+            <button id="connectButton" class="button">BLE 연결</button>
+        </div>
+        
+        <!-- 토글 스위치로 변경 -->
+        <div class="toggle-container">
+            <span class="toggle-label">LED 켜기/끄기</span>
+            <label class="toggle-switch">
+                <input type="checkbox" id="toggleSwitch" disabled>
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+        
+        <div class="brightness-control">
+            <label for="brightness" class="brightness-label">밝기 조절</label>
+            <div id="brightnessValue" class="brightness-value">50%</div>
+            <input type="range" id="brightness" class="slider" min="0" max="100" value="50" disabled>
+        </div>
+    </div>
+
+    <script>
+        // BLE 관련 변수
+        let device = null;
+        let characteristic = null;
+        const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
+        const CHARACTERISTIC_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
+
+        // DOM 요소
+        const connectButton = document.getElementById('connectButton');
+        const toggleSwitch = document.getElementById('toggleSwitch');
+        const brightnessSlider = document.getElementById('brightness');
+        const brightnessValue = document.getElementById('brightnessValue');
+        const connectionStatus = document.getElementById('connectionStatus');
+        const ledStatus = document.getElementById('ledStatus');
+
+        let isLedOn = false;
+
+        // BLE 연결 함수
+        async function connectBLE() {
+            try {
+                device = await navigator.bluetooth.requestDevice({
+                    filters: [
+                        { name: 'ESP32_LED' }
+                    ],
+                    optionalServices: [SERVICE_UUID]
+                });
+
+                console.log('장치 연결 중...');
+                const server = await device.gatt.connect();
+                console.log('서비스 가져오는 중...');
+                const service = await server.getPrimaryService(SERVICE_UUID);
+                console.log('특성 가져오는 중...');
+                characteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
+
+                // 특성 값 변경 이벤트 리스너 설정
+                await characteristic.startNotifications();
+                characteristic.addEventListener('characteristicvaluechanged', handleCharacteristicValueChanged);
+                console.log('알림 활성화됨');
+
+                // 현재 상태 요청
+                await requestCurrentStatus();
+
+                connectionStatus.textContent = '연결 상태: 연결됨';
+                connectionStatus.className = 'status connected';
+                
+                connectButton.textContent = '연결 해제';
+                toggleSwitch.disabled = false;
+                brightnessSlider.disabled = false;
+
+                device.addEventListener('gattserverdisconnected', onDisconnected);
+            } catch (error) {
+                console.error('연결 오류:', error);
+                alert('연결 실패: ' + error);
+            }
+        }
+
+        // 현재 상태 요청 함수
+        async function requestCurrentStatus() {
+            if (characteristic) {
+                try {
+                    console.log('현재 상태 요청 중...');
+                    // 상태 요청 전에 잠시 대기
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    await characteristic.writeValue(new TextEncoder().encode('STATUS'));
+                    console.log('상태 요청 완료');
+                } catch (error) {
+                    console.error('상태 요청 실패:', error);
+                }
+            }
+        }
+
+        // 특성 값 변경 이벤트 핸들러
+        function handleCharacteristicValueChanged(event) {
+            try {
+                const value = new TextDecoder().decode(event.target.value);
+                console.log('수신된 값:', value);
+                
+                if (value.startsWith('STATUS:')) {
+                    const parts = value.split(':');
+                    if (parts.length === 3) {
+                        const newLedState = parts[1] === '1';
+                        const newBrightness = parseInt(parts[2]);
+                        
+                        console.log('LED 상태 업데이트:', newLedState ? '켜짐' : '꺼짐', '밝기:', newBrightness + '%');
+                        
+                        // UI 업데이트
+                        updateUI(newLedState, newBrightness);
+                    }
+                }
+            } catch (error) {
+                console.error('상태 업데이트 처리 오류:', error);
+            }
+        }
+
+        // UI 업데이트 함수
+        function updateUI(ledOn, brightness) {
+            try {
+                console.log('UI 업데이트:', ledOn ? '켜짐' : '꺼짐', brightness + '%');
+                isLedOn = ledOn;
+                toggleSwitch.checked = isLedOn;
+                ledStatus.textContent = `LED 상태: ${isLedOn ? '켜짐' : '꺼짐'}`;
+                
+                brightnessSlider.value = brightness;
+                brightnessValue.textContent = brightness + '%';
+                
+                // 밝기 슬라이더 활성화 상태 업데이트
+                brightnessSlider.disabled = !isLedOn;
+            } catch (error) {
+                console.error('UI 업데이트 오류:', error);
+            }
+        }
+
+        // 연결 해제 함수
+        async function disconnectBLE() {
+            if (device && device.gatt.connected) {
+                try {
+                    if (characteristic) {
+                        await characteristic.stopNotifications();
+                        characteristic.removeEventListener('characteristicvaluechanged', handleCharacteristicValueChanged);
+                    }
+                    device.gatt.disconnect();
+                } catch (error) {
+                    console.error('연결 해제 오류:', error);
+                }
+            }
+        }
+
+        // 연결 해제 이벤트 핸들러
+        function onDisconnected() {
+            connectionStatus.textContent = '연결 상태: 연결 해제됨';
+            connectionStatus.className = 'status disconnected';
+            
+            connectButton.textContent = 'BLE 연결';
+            toggleSwitch.disabled = true;
+            brightnessSlider.disabled = true;
+            
+            // 특성 값 변경 이벤트 리스너 제거
+            if (characteristic) {
+                characteristic.removeEventListener('characteristicvaluechanged', handleCharacteristicValueChanged);
+            }
+            
+            // 상태 초기화
+            isLedOn = false;
+            toggleSwitch.checked = false;
+            ledStatus.textContent = 'LED 상태: 꺼짐';
+            brightnessValue.textContent = '50%';
+            brightnessSlider.value = 50;
+        }
+
+        // LED 토글 함수
+        async function toggleLED() {
+            if (characteristic) {
+                isLedOn = toggleSwitch.checked;
+                const value = isLedOn ? 'ON' : 'OFF';
+                console.log('LED 토글:', value);
+                await characteristic.writeValue(new TextEncoder().encode(value));
+                ledStatus.textContent = `LED 상태: ${isLedOn ? '켜짐' : '꺼짐'}`;
+                
+                // 밝기 슬라이더 활성화 상태 업데이트
+                brightnessSlider.disabled = !isLedOn;
+                
+                if (isLedOn) {
+                    // LED가 켜질 때 현재 밝기값 적용
+                    setBrightness(brightnessSlider.value);
+                }
+            }
+        }
+
+        // 밝기 조절 함수
+        async function setBrightness(value) {
+            if (characteristic && isLedOn) {
+                await characteristic.writeValue(new TextEncoder().encode(`BRIGHT:${value}`));
+                brightnessValue.textContent = value + '%';
+            }
+        }
+
+        // 이벤트 리스너 등록
+        connectButton.addEventListener('click', () => {
+            if (device && device.gatt.connected) {
+                disconnectBLE();
+            } else {
+                connectBLE();
+            }
+        });
+
+        toggleSwitch.addEventListener('change', toggleLED);
+
+        let brightnessTimeout;
+        brightnessSlider.addEventListener('input', (e) => {
+            brightnessValue.textContent = e.target.value + '%';
+            // 디바운싱 적용
+            clearTimeout(brightnessTimeout);
+            brightnessTimeout = setTimeout(() => {
+                setBrightness(e.target.value);
+            }, 100);
+        });
+        
+        // 페이지 로드 시 자동 연결 시도 (이전에 연결된 장치가 있는 경우)
+        window.addEventListener('load', async () => {
+            try {
+                // 이전에 연결된 장치가 있는지 확인
+                const devices = await navigator.bluetooth.getDevices();
+                if (devices.length > 0) {
+                    console.log('이전에 연결된 장치 발견:', devices[0].name);
+                    // 자동 연결 시도
+                    device = devices[0];
+                    await connectBLE();
+                }
+            } catch (error) {
+                console.error('자동 연결 실패:', error);
+            }
+        });
+
+        // 서비스 워커 등록
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        console.log('서비스 워커 등록 성공:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.error('서비스 워커 등록 실패:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html> 
