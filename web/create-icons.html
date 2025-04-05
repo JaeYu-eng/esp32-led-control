@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>아이콘 생성기</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        canvas {
+            border: 1px solid #ccc;
+            margin: 20px 0;
+        }
+        .icon-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .icon-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 10px;
+        }
+        .icon-item img {
+            border: 1px solid #ccc;
+            margin-bottom: 5px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>ESP32 LED 제어 앱 아이콘 생성기</h1>
+    <p>아이콘을 생성하고 다운로드하려면 아래 버튼을 클릭하세요.</p>
+    <button id="generateBtn">아이콘 생성</button>
+    <div id="iconContainer" class="icon-container"></div>
+
+    <script>
+        document.getElementById('generateBtn').addEventListener('click', generateIcons);
+
+        function generateIcons() {
+            const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+            const container = document.getElementById('iconContainer');
+            container.innerHTML = '';
+
+            sizes.forEach(size => {
+                const canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                const ctx = canvas.getContext('2d');
+
+                // 배경
+                ctx.fillStyle = '#4CAF50';
+                ctx.fillRect(0, 0, size, size);
+
+                // LED 원
+                const centerX = size / 2;
+                const centerY = size / 2;
+                const radius = size * 0.4;
+                
+                // 외부 원
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#ffffff';
+                ctx.fill();
+                
+                // 내부 원
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius * 0.7, 0, Math.PI * 2);
+                ctx.fillStyle = '#4CAF50';
+                ctx.fill();
+                
+                // 반사광
+                ctx.beginPath();
+                ctx.arc(centerX - radius * 0.3, centerY - radius * 0.3, radius * 0.2, 0, Math.PI * 2);
+                ctx.fillStyle = '#ffffff';
+                ctx.fill();
+
+                // 아이콘 컨테이너에 추가
+                const iconItem = document.createElement('div');
+                iconItem.className = 'icon-item';
+                
+                const img = document.createElement('img');
+                img.src = canvas.toDataURL('image/png');
+                img.width = size;
+                img.height = size;
+                
+                const downloadLink = document.createElement('a');
+                downloadLink.href = canvas.toDataURL('image/png');
+                downloadLink.download = `icon-${size}x${size}.png`;
+                downloadLink.textContent = `${size}x${size} 다운로드`;
+                downloadLink.style.marginTop = '5px';
+                
+                iconItem.appendChild(img);
+                iconItem.appendChild(downloadLink);
+                container.appendChild(iconItem);
+                
+                // 자동 다운로드
+                downloadLink.click();
+            });
+        }
+    </script>
+</body>
+</html> 
